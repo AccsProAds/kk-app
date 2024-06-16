@@ -17,8 +17,10 @@ use Illuminate\Database\Eloquent\Model;
 * @property boolean $processed
 * @property \Carbon\Carbon $created_at
 * @property \Carbon\Carbon $updated_at
-* @property json $data
+* @property array $data
 * @property integer $total_leads
+* @property boolean $leads_exported
+* @property \Illuminate\Database\Eloquent\Collection $leads
 */ 
 abstract class AbstractLogFile extends Model
 {
@@ -36,7 +38,8 @@ abstract class AbstractLogFile extends Model
      */
     protected $attributes = [
         'processed' => 0,
-        'total_leads' => 0
+        'total_leads' => 0,
+        'leads_exported' => 0
     ];
     
     /**  
@@ -51,6 +54,12 @@ abstract class AbstractLogFile extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'data' => 'array',
-        'total_leads' => 'integer'
+        'total_leads' => 'integer',
+        'leads_exported' => 'boolean'
     ];
+    
+    public function leads()
+    {
+        return $this->hasMany('\App\Models\Lead', 'log_file_id', 'id');
+    }
 }

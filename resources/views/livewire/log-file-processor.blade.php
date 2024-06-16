@@ -18,6 +18,10 @@
                 Process Files
             </button>
 
+            <button wire:click="processLeads" class="btn btn-primary mb-3" wire:loading.attr="disabled">
+                Process Leads
+            </button>
+
             
 
             <div wire:loading.remove>

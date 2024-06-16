@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\LogFile;
+use App\Models\Lead;
 use App\Libraries\FileExtractLibrary;
 use Illuminate\Support\Facades\Storage;
 
@@ -75,6 +76,52 @@ class LogFileProcessor extends Component
         }
 
         session()->flash('message', 'File Data Processed');
+    }
+
+    public function processLeads()
+    {
+
+        $unprocessedFiles = LogFile::where('leads_exported', false)->get();
+       
+        foreach($unprocessedFiles as $file)
+        {
+            $total = 0;
+            $data = json_decode($file->data);
+            //dd($data);
+            foreach($data as $lead_data)
+            {
+
+                if(isset($lead_data->cardNumber) && isset($lead_data->cardMonth) && isset($lead_data->cardYear)) {
+                    $lead = new Lead();
+                    $lead->log_file_id = $file->id;
+                    $lead->first_name = $lead_data->firstName ?? '';
+                    $lead->last_name = $lead_data->lastName ?? '';
+                    $lead->email = $lead_data->emailAddress ?? '';
+                    $lead->address_1 = $lead_data->address1 ?? '';
+                    $lead->address_2 = $lead_data->address2 ?? '';
+                    $lead->city = $lead_data->city ?? '';
+                    $lead->state = $lead_data->state ?? '';
+                    $lead->zip = $lead_data->postalCode ?? '';
+                    $lead->country = $lead_data->country ?? '';
+                    $lead->ip = $lead_data->ipAddress ?? '';
+                    $lead->card_month = $lead_data->cardMonth ?? '';
+                    $lead->card_year = $lead_data->cardYear ?? '';
+                    $lead->card_number = $lead_data->cardNumber ?? '';
+                    $lead->card_cvv = $lead_data->cardSecurityCode ?? '';
+                    $lead->declined = $lead_data->decline_message == "declined" ? true : false;
+                    $lead->save();
+                    $total++;
+                }
+
+               
+
+            }
+            $file->leads_exported = true;
+            session()->flash('message', 'File '.$file->file_path.' processed with '.$total.' leads');
+        }
+
+        
+
     }
 
     public function render()
