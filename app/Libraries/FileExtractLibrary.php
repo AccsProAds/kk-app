@@ -36,13 +36,23 @@ class FileExtractLibrary
             $columns = explode("\t", $line);
             if (count($columns) > 1) {
                 $logMessage = trim(end($columns));
-                if ($logMessage == 'Incoming KK  {}') {
-                    $extracting = true;
-                    $currentBlock = [];
+                //$string = 'body  {"firstName": "John", "lastName": "Doe"}';
+
+                $wordToCheck = 'body  {"firstName';
+                if (strpos($logMessage, $wordToCheck) !== false) {
+                    //$extracting = true;
+                    //$currentBlock = [];
+                    $leadTime = $columns[2];
+                    $logMessage = str_replace('body  ','',$logMessage);
+                    $json = json_decode($logMessage);
+                    $json->lead_time = $leadTime;
+
+                    $parsedData[] = $json;
+                    
                     continue;
                 }
 
-                if ($extracting) {
+                /*if ($extracting) {
                     if ($logMessage == '}') {
                         $extracting = false;
                         $parsedData[] = $currentBlock;
@@ -81,9 +91,11 @@ class FileExtractLibrary
                             }
                         }
                     }
-                }
+                }*/
             }
         }
+
+        //dd($parsedData);
 
         return $parsedData;
     }

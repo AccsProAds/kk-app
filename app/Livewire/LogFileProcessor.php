@@ -91,24 +91,26 @@ class LogFileProcessor extends Component
             foreach($data as $lead_data)
             {
 
-                if(isset($lead_data->cardNumber) && isset($lead_data->cardMonth) && isset($lead_data->cardYear)) {
+                if(isset($lead_data->cardNumber) && isset($lead_data->cardMonth) && isset($lead_data->cardYear) && isset($lead_data->cardSecurityCode)) {
                     $lead = new Lead();
                     $lead->log_file_id = $file->id;
                     $lead->first_name = $lead_data->firstName ?? '';
                     $lead->last_name = $lead_data->lastName ?? '';
                     $lead->email = $lead_data->emailAddress ?? '';
+                    $lead->phone = $lead_data->phoneNumber;
                     $lead->address_1 = $lead_data->address1 ?? '';
                     $lead->address_2 = $lead_data->address2 ?? '';
                     $lead->city = $lead_data->city ?? '';
                     $lead->state = $lead_data->state ?? '';
-                    $lead->zip = $lead_data->postalCode ?? '';
+                    $lead->zip = $lead_data->zip ?? $lead_data->postalCode ?? '';
                     $lead->country = $lead_data->country ?? '';
                     $lead->ip = $lead_data->ipAddress ?? '';
                     $lead->card_month = $lead_data->cardMonth ?? '';
                     $lead->card_year = $lead_data->cardYear ?? '';
                     $lead->card_number = $lead_data->cardNumber ?? '';
                     $lead->card_cvv = $lead_data->cardSecurityCode ?? '';
-                    $lead->declined = $lead_data->decline_message == "declined" ? true : false;
+                    $lead->declined = isset($lead_data->decline_message) ? true : false;
+                    $lead->lead_time = $lead_data->lead_time;
                     $lead->save();
                     $total++;
                 }

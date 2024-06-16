@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 * @property string $first_name
 * @property string $last_name
 * @property string $email
+* @property string $phone
 * @property text $address_1
 * @property text $address_2
 * @property string $city
@@ -31,6 +32,7 @@ use Illuminate\Database\Eloquent\Model;
 * @property string $card_number
 * @property integer $card_cvv
 * @property boolean $declined
+* @property string $lead_time
 * @property \App\Models\LogFile|null $logFile
 */ 
 abstract class AbstractLead extends Model
@@ -55,6 +57,7 @@ abstract class AbstractLead extends Model
         'first_name' => 'string',
         'last_name' => 'string',
         'email' => 'string',
+        'phone' => 'string',
         'address_1' => 'string',
         'address_2' => 'string',
         'city' => 'string',
@@ -66,7 +69,8 @@ abstract class AbstractLead extends Model
         'card_year' => 'string',
         'card_number' => 'string',
         'card_cvv' => 'integer',
-        'declined' => 'boolean'
+        'declined' => 'boolean',
+        'lead_time' => 'string'
     ];
     
     public function logFile()
