@@ -4,15 +4,19 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\LogFile;
-use App\Http\Controllers\FileExtractController;
+use App\Libraries\FileExtractLibrary;
 use Illuminate\Support\Facades\Storage;
 
 class LogFileProcessor extends Component
 {
     public $batchSize = 10;
-    public $processing = false;
     public $processedFiles = [];
 
+
+    public function mount()
+    {
+        //$this->fileExtractService = $fileExtractService;
+    }
 
     private function extractFilesData($dir)
     {
@@ -31,31 +35,28 @@ class LogFileProcessor extends Component
         foreach ($directories as $directory) {
             $result = array_merge($result, $this->extractFilesData($directory));
         }
+        
         return $result;
         
     }
 
     public function processDirs()
     {
-        $this->processing = true;
+        
         $extractFilesData = $this->extractFilesData('public/logs');
-        $this->processing = false;
+        session()->flash('message', 'Files Processed');
     }
 
-    public function mount()
-    {
-        $this->processFiles = LogFile::where('processed', true)->get();
-    }
+
 
 
 
     public function processFiles()
     {
-        $this->processing = true;
-
         // Fetch unprocessed files in batches
         $files = LogFile::where('processed', false)->take($this->batchSize)->get();
-
+        $fileLibrary = new \App\Libraries\FileExtractLibrary();
+        
         foreach ($files as $file) {
             // Check if the file has already been processed
             if ($file->processed) {
@@ -63,15 +64,17 @@ class LogFileProcessor extends Component
             }
 
             // Call the extract and parse logic
-            $controller = new FileExtractController();
-            $controller->extractAndParseFile($file->file_path);
-
+            
+            $data = $fileLibrary->extractAndParseFile($file->file_path);
+            
             // Mark the file as processed
             $file->processed = true;
+            $file->data = $data;
+            $file->total_leads = count($data);
             $file->save();
         }
 
-        $this->processing = false;
+        session()->flash('message', 'File Data Processed');
     }
 
     public function render()

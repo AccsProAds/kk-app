@@ -4,6 +4,11 @@
             Process Files
         </div>
         <div class="card-body">
+            
+            <div wire:loading>
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                </div>
+            </div>
 
             <button wire:click="processDirs" class="btn btn-primary mb-3" wire:loading.attr="disabled">
                 Process Dirs
@@ -13,17 +18,13 @@
                 Process Files
             </button>
 
-            <div wire:loading>
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Processing...</span>
-                </div>
-            </div>
+            
 
             <div wire:loading.remove>
                 <p>Unprocessed files: {{ $unprocessedFilesCount }}</p>
-                @if (!$processing && $unprocessedFilesCount === 0)
-                    <div class="alert alert-success" role="alert">
-                        All files have been processed.
+                @if (session()->has('message'))
+                    <div class="alert alert-success">
+                        {{ session('message') }}
                     </div>
                 @endif
             </div>
