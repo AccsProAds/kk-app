@@ -135,7 +135,7 @@ class LogFileProcessor extends Component
         flashify([
             'plugin' => 'izi-toast',
             'title' => 'Success',
-            'text' => $totalLeads.'Leads Scheduled / '.$leadsPerDay.' / day',
+            'text' => $totalLeads.' Leads Scheduled - '.$leadsPerDay.' / day',
             'type' => 'success',
             'livewire' => $this,
         ]);
