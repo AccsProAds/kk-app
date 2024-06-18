@@ -103,7 +103,7 @@ class ProcessLead implements ShouldQueue
             $this->lead2External->response = ["endpoint" => $endpoint, 'response' => $responseBody];
             $this->lead2External->save();
 
-            Log::info('Lead processed successfully', ['lead_id' => $this->lead2External->lead_id, 'request' => $data, 'response' => $responseBody]);
+            //Log::info('Lead processed successfully', ['lead_id' => $this->lead2External->lead_id, 'request' => $data, 'response' => $responseBody]);
         } catch (\Exception $e) {
             Log::error('Error processing lead', ['lead_id' => $this->lead2External->lead_id, 'error' => $e->getMessage()]);
         }
