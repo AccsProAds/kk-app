@@ -14,7 +14,7 @@
 <body>
     <div class="container mt-5">
         <h1>File Processor</h1>
-        {{ $slot }}
+        @livewire('log-file-processor')
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
