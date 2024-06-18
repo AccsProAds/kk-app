@@ -63,15 +63,30 @@ class LogFileProcessor extends Component
     public function scheduleLeads()
     {
         $this->validate();
-
+    
         $startDate = Carbon::parse($this->start_date)->startOfDay();
         $endDate = Carbon::parse($this->end_date)->endOfDay();
         $limit = $this->limit;
         $service = $this->service ?? 'fitnessxr';
         $country = $this->country;
-
-        $days = $startDate->diffInDays($endDate) + 1;
-
+    
+        $now = Carbon::now();
+    
+        // Adjust start date to the current time if the start date is today
+        if ($startDate->isToday()) {
+            $startDate = $now->copy();
+        }
+    
+        // Adjust the number of days to be inclusive of both start and end date
+        $days = $startDate->diffInDays($endDate);
+    
+        // If start date is today, schedule within the remaining time of the day
+        if ($startDate->isSameDay($endDate)) {
+            $days = 1;
+        } else {
+            $days++;
+        }
+    
         $query = Lead::leftJoin('lead2_externals', function ($join) use ($service) {
             $join->on('leads.id', '=', 'lead2_externals.lead_id')
                 ->where('lead2_externals.external_service', '=', $service);
@@ -79,20 +94,19 @@ class LogFileProcessor extends Component
             ->whereNull('lead2_externals.id')
             ->orderBy('leads.lead_time', 'ASC')
             ->select('leads.*');
-
+    
         if (!empty($country)) {
             $query->where('leads.country', $country);
         }
-
+    
         $query->where('leads.declined', false);
     
-
         if ($limit > 0) {
             $query->limit($limit);
         }
-
+    
         $leads = $query->get();
-
+    
         if ($leads->isEmpty()) {
             flashify([
                 'plugin' => 'izi-toast',
@@ -103,35 +117,42 @@ class LogFileProcessor extends Component
             ]);
             return;
         }
-
+    
         $totalLeads = $leads->count();
         $leadsPerDay = intdiv($totalLeads, $days);
         $extraLeads = $totalLeads % $days;
-
+    
         $leadIndex = 0;
-
+    
         for ($day = 0; $day < $days; $day++) {
             $currentDate = $startDate->copy()->addDays($day);
+    
+            // Adjust current time for today if the day is today
+            if ($currentDate->isToday()) {
+                $currentTime = $now->copy();
+            } else {
+                $currentTime = $currentDate->copy();
+            }
+    
             $leadsForToday = $leadsPerDay + ($day < $extraLeads ? 1 : 0);
-
+    
             if ($leadsForToday > 0) {
                 $interval = intdiv(86400, $leadsForToday);
-                $currentTime = $currentDate->copy();
-
+    
                 for ($i = 0; $i < $leadsForToday && $leadIndex < $totalLeads; $i++) {
                     $scheduledTime = $currentTime->copy()->addSeconds($i * $interval);
-
+    
                     Lead2External::create([
                         'lead_id' => $leads[$leadIndex]->id,
                         'external_service' => $service,
                         'scheduled_time' => $scheduledTime
                     ]);
-
+    
                     $leadIndex++;
                 }
             }
         }
-
+    
         flashify([
             'plugin' => 'izi-toast',
             'title' => 'Success',
@@ -140,6 +161,8 @@ class LogFileProcessor extends Component
             'livewire' => $this,
         ]);
     }
+    
+
 
     public function processDirs()
     {
