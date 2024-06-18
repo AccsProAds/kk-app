@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aea08d958878f37e04428e560178ec48",
+    "content-hash": "f155173ecb4c2be0c6c410b46dcdf268",
     "packages": [
         {
             "name": "brick/math",
@@ -1962,6 +1962,64 @@
                 "source": "https://github.com/livewire/volt"
             },
             "time": "2024-05-31T19:07:20+00:00"
+        },
+        {
+            "name": "mhmiton/laravel-flashify",
+            "version": "v2.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mhmiton/laravel-flashify.git",
+                "reference": "6f077911011fc8ff210f2cfd334c5663a27b94b2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mhmiton/laravel-flashify/zipball/6f077911011fc8ff210f2cfd334c5663a27b94b2",
+                "reference": "6f077911011fc8ff210f2cfd334c5663a27b94b2",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^5.5|6.0|7.0|^8.0|^9.0|^10.0|^11.0",
+                "php": ">=7.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Mhmiton\\LaravelFlashify\\LaravelFlashifyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Mhmiton\\LaravelFlashify\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mehediul Hassan Miton",
+                    "email": "mhmiton.dev@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Showing multiple flash messages for the laravel or laravel-livewire.",
+            "keywords": [
+                "laravel",
+                "laravel-flashify",
+                "laravel-livewire-flashify",
+                "livewire-flashify"
+            ],
+            "support": {
+                "issues": "https://github.com/mhmiton/laravel-flashify/issues",
+                "source": "https://github.com/mhmiton/laravel-flashify/tree/v2.1.0"
+            },
+            "time": "2024-06-04T10:45:52+00:00"
         },
         {
             "name": "monolog/monolog",

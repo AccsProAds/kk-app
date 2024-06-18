@@ -30,10 +30,19 @@ use Illuminate\Database\Eloquent\Model;
 * @property string $card_month
 * @property string $card_year
 * @property string $card_number
-* @property integer $card_cvv
+* @property string $card_cvv
+* @property string $creditcard_type
 * @property boolean $declined
-* @property string $lead_time
+* @property \Carbon\Carbon $lead_time
+* @property text $lead_url
+* @property string $aff_id
+* @property string $pub
+* @property string $click_id
+* @property text $c1
+* @property text $c2
+* @property text $c3
 * @property \App\Models\LogFile|null $logFile
+* @property \Illuminate\Database\Eloquent\Collection $lead2Externals
 */ 
 abstract class AbstractLead extends Model
 {
@@ -68,13 +77,26 @@ abstract class AbstractLead extends Model
         'card_month' => 'string',
         'card_year' => 'string',
         'card_number' => 'string',
-        'card_cvv' => 'integer',
+        'card_cvv' => 'string',
+        'creditcard_type' => 'string',
         'declined' => 'boolean',
-        'lead_time' => 'string'
+        'lead_time' => 'datetime',
+        'lead_url' => 'string',
+        'aff_id' => 'string',
+        'pub' => 'string',
+        'click_id' => 'string',
+        'c1' => 'string',
+        'c2' => 'string',
+        'c3' => 'string'
     ];
     
     public function logFile()
     {
         return $this->belongsTo('\App\Models\LogFile', 'log_file_id', 'id');
+    }
+    
+    public function lead2Externals()
+    {
+        return $this->hasMany('\App\Models\Lead2External', 'lead_id', 'id');
     }
 }
