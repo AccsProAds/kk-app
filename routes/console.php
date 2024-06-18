@@ -27,7 +27,7 @@ Artisan::command('leads:process', function () {
             $lead2External->update(['processed' => true]);
             //Log::info('Processed lead with ID: ' . $lead2External->id);
     }
-})->purpose('Run the leads')->everyThirtySeconds();
+})->purpose('Run the leads')->everyFiveSeconds();
 
 // Register the scheduler command
 //Schedule::command('leads:process')->everyMinute();
