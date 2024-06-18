@@ -83,6 +83,8 @@ class LogFileProcessor extends Component
         if (!empty($country)) {
             $query->where('leads.country', $country);
         }
+
+        $query->where('leads.declined', false);
     
 
         if ($limit > 0) {
@@ -133,7 +135,7 @@ class LogFileProcessor extends Component
         flashify([
             'plugin' => 'izi-toast',
             'title' => 'Success',
-            'text' => 'Leads Scheduled',
+            'text' => $totalLeads.'Leads Scheduled / '.$leadsPerDay.' / day',
             'type' => 'success',
             'livewire' => $this,
         ]);
