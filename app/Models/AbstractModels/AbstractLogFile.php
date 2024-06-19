@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 * @property bigInteger $id
 * @property string $file_path
 * @property boolean $processed
+* @property boolean $is_processing
 * @property \Carbon\Carbon $created_at
 * @property \Carbon\Carbon $updated_at
 * @property array $data
@@ -38,6 +39,7 @@ abstract class AbstractLogFile extends Model
      */
     protected $attributes = [
         'processed' => 0,
+        'is_processing' => 0,
         'total_leads' => 0,
         'leads_exported' => 0
     ];
@@ -51,6 +53,7 @@ abstract class AbstractLogFile extends Model
         'id' => 'integer',
         'file_path' => 'string',
         'processed' => 'boolean',
+        'is_processing' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'data' => 'array',

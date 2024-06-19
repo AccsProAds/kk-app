@@ -19,8 +19,18 @@ class LogFileProcessor extends Component
     public $limit = 0;
     public $service;
     public $country;
+    public $declined_filter = 'all';
+
+
+    public $lead_time_start;
+    public $lead_time_end;
 
     public $services = ['fitnessxr', 'usadc', 'uprev']; // Add your services here
+
+    public $leads_found = 0;
+    public $leads_per_day = 0;
+    public $total_days = 0;
+    public $leads = [];
 
 
     protected $rules = [
@@ -29,7 +39,10 @@ class LogFileProcessor extends Component
         'service' => 'required|string|in:fitnessxr,usadc,uprev',
         'service' => 'required|string',
         'country' => 'nullable|string',
+        'lead_time_start' => 'nullable|date',
+        'lead_time_end' => 'nullable|date',
         'limit' => 'sometimes|integer|min:0',
+        'declined_filter' => 'required|string|in:all,only,ignore',
     ];
 
 
@@ -38,34 +51,80 @@ class LogFileProcessor extends Component
         //$this->fileExtractService = $fileExtractService;
     }
 
-    private function extractFilesData($dir)
+    public function calculateLeads()
     {
-       
-        $result = [];
-        //$dir = 'public/logs';
-        $files = Storage::files($dir); // Only get files, not directories
-        foreach ($files as $file) {
-            if (substr($file, -7) === '.tsv.gz') {
-                $result[] = $file;
-                LogFile::firstOrCreate(['file_path' => $file]);
-            }
+        $this->validate();
+
+        $startDate = Carbon::parse($this->start_date)->startOfDay();
+        $endDate = Carbon::parse($this->end_date)->endOfDay();
+        $leadTimeStart = $this->lead_time_start ? Carbon::parse($this->lead_time_start)->startOfDay() : null;
+        $leadTimeEnd = $this->lead_time_end ? Carbon::parse($this->lead_time_end)->endOfDay() : null;
+        $limit = $this->limit;
+        $service = $this->service ?? 'fitnessxr';
+        $country = $this->country;
+
+        $now = Carbon::now();
+
+        if ($startDate->isToday()) {
+            $startDate = $now->copy();
         }
 
-        $directories = Storage::directories($dir); // Only get directories
-        foreach ($directories as $directory) {
-            $result = array_merge($result, $this->extractFilesData($directory));
+        // Adjust the number of days to be inclusive of both start and end date
+        $days = $startDate->diffInDays($endDate);
+
+        dd($days);
+    
+        // If start date is today, schedule within the remaining time of the day
+        if ($startDate->isSameDay($endDate)) {
+            $days = 1;
+        } else {
+            $days++;
         }
-        
-        return $result;
-        
+
+        $query = Lead::leftJoin('lead2_externals', function ($join) use ($service) {
+            $join->on('leads.id', '=', 'lead2_externals.lead_id')
+                ->where('lead2_externals.external_service', '=', $service);
+        })
+            ->whereNull('lead2_externals.id')
+            ->orderBy('leads.lead_time', 'ASC')
+            ->select('leads.*');
+
+        if (!empty($country)) {
+            $query->where('leads.country', $country);
+        }
+
+        // Apply declined filter
+        if ($this->declined_filter === 'only') {
+            $query->where('leads.declined', true);
+        } elseif ($this->declined_filter === 'ignore') {
+            $query->where('leads.declined', false);
+        }
+
+        if ($leadTimeStart && $leadTimeEnd) {
+            $query->whereBetween('leads.lead_time', [$leadTimeStart, $leadTimeEnd]);
+        }
+
+        if ($limit > 0) {
+            $query->limit($limit);
+        }
+
+        $this->leads = $query->get();
+        $this->leads_found = $this->leads->count();
+        $this->total_days = $days;
+        $this->leads_per_day = intdiv($this->leads_found, $days) + ($this->leads_found % $days > 0 ? 1 : 0);
+
+        //$this->emit('leadsCalculated');
     }
+
 
     public function scheduleLeads()
     {
-        $this->validate();
+        /*$this->validate();
     
         $startDate = Carbon::parse($this->start_date)->startOfDay();
         $endDate = Carbon::parse($this->end_date)->endOfDay();
+        $leadTimeStart = $this->lead_time_start ? Carbon::parse($this->lead_time_start)->startOfDay() : null;
+        $leadTimeEnd = $this->lead_time_end ? Carbon::parse($this->lead_time_end)->endOfDay() : null;
         $limit = $this->limit;
         $service = $this->service ?? 'fitnessxr';
         $country = $this->country;
@@ -99,10 +158,19 @@ class LogFileProcessor extends Component
             $query->where('leads.country', $country);
         }
     
-        $query->where('leads.declined', false);
+         // Apply declined filter
+        if ($this->declined_filter === 'only') {
+            $query->where('leads.declined', true);
+        } elseif ($this->declined_filter === 'ignore') {
+            $query->where('leads.declined', false);
+        }
     
         if ($limit > 0) {
             $query->limit($limit);
+        }
+
+        if ($leadTimeStart && $leadTimeEnd) {
+            $query->whereBetween('leads.lead_time', [$leadTimeStart, $leadTimeEnd]);
         }
     
         $leads = $query->get();
@@ -116,187 +184,77 @@ class LogFileProcessor extends Component
                 'livewire' => $this,
             ]);
             return;
+        }*/
+
+        $this->calculateLeads();
+
+        if ($this->leads_found === 0) {
+            flashify([
+                'plugin' => 'izi-toast',
+                'title' => 'Error',
+                'text' => '0 leads found',
+                'type' => 'error',
+                'livewire' => $this,
+            ]);
+            return;
         }
     
-        $totalLeads = $leads->count();
-        $leadsPerDay = intdiv($totalLeads, $days);
-        $extraLeads = $totalLeads % $days;
-    
+        $startDate = Carbon::parse($this->start_date)->startOfDay();
+        $endDate = Carbon::parse($this->end_date)->endOfDay();
+        $now = Carbon::now();
+
+        if ($startDate->isToday()) {
+            $startDate = $now->copy();
+        }
+
+        $days = $this->total_days;
+        $leadsPerDay = $this->leads_per_day;
+        $extraLeads = $this->leads_found % $days;
+
         $leadIndex = 0;
-    
+
         for ($day = 0; $day < $days; $day++) {
             $currentDate = $startDate->copy()->addDays($day);
-    
-            // Adjust current time for today if the day is today
             if ($currentDate->isToday()) {
-                $currentTime = $now->copy();
+                $secondsInDay = 86400 - $now->secondsSinceMidnight();
             } else {
-                $currentTime = $currentDate->copy();
+                $secondsInDay = 86400;
             }
-    
+
             $leadsForToday = $leadsPerDay + ($day < $extraLeads ? 1 : 0);
-    
+
             if ($leadsForToday > 0) {
-                $interval = intdiv(86400, $leadsForToday);
-    
-                for ($i = 0; $i < $leadsForToday && $leadIndex < $totalLeads; $i++) {
+                $interval = intdiv($secondsInDay, $leadsForToday);
+                $currentTime = $currentDate->copy();
+
+                if ($currentDate->isToday()) {
+                    $currentTime = $now->copy();
+                }
+
+                for ($i = 0; $i < $leadsForToday && $leadIndex < $this->leads_found; $i++) {
                     $scheduledTime = $currentTime->copy()->addSeconds($i * $interval);
-    
+
                     Lead2External::create([
-                        'lead_id' => $leads[$leadIndex]->id,
-                        'external_service' => $service,
+                        'lead_id' => $this->leads[$leadIndex]->id,
+                        'external_service' => $this->service,
                         'scheduled_time' => $scheduledTime
                     ]);
-    
+
                     $leadIndex++;
                 }
             }
         }
-    
+
         flashify([
             'plugin' => 'izi-toast',
             'title' => 'Success',
-            'text' => $totalLeads.' Leads Scheduled - '.$leadsPerDay.' / day',
+            'text' => $this->leads_found.' Leads Scheduled - '.$leadsPerDay.' / day',
             'type' => 'success',
             'livewire' => $this,
         ]);
     }
     
-
-
-    public function processDirs()
-    {
-        
-        $extractFilesData = $this->extractFilesData('public/logs');
-        flashify([
-            'plugin' => 'izi-toast',
-            'title' => 'Success',
-            'text' => 'Files Proccessed Ready To Read',
-            'type' => 'success',
-            'livewire' => $this,
-        ]);
-    }
-
-
-
-
-
-    public function processFiles()
-    {
-        // Fetch unprocessed files in batches
-        $files = LogFile::where('processed', false)->take($this->batchSize)->get();
-        $fileLibrary = new \App\Libraries\FileExtractLibrary();
-        
-        foreach ($files as $file) {
-            // Check if the file has already been processed
-            if ($file->processed) {
-                continue;
-            }
-
-            // Call the extract and parse logic
-            
-            $data = $fileLibrary->extractAndParseFile($file->file_path);
-            
-            // Mark the file as processed
-            $file->processed = true;
-            $file->data = $data;
-            $file->total_leads = count($data);
-            $file->save();
-        }
-
-        flashify([
-            'plugin' => 'izi-toast',
-            'title' => 'Success',
-            'text' => 'File data leads processed',
-            'type' => 'success',
-            'livewire' => $this,
-        ]);
-    }
-
-    public function processLeads()
-    {
-
-        $unprocessedFiles = LogFile::where('leads_exported', false)
-        ->whereNotNull('data')
-        ->where('leads_exported', false)
-        ->take(5)
-        ->get();
-       
-        foreach($unprocessedFiles as $file)
-        {
-            $total = 0;
-            $data = json_decode($file->data);
-            //dd($data);
-            foreach($data as $lead_data)
-            {
-
-                if(isset($lead_data->cardNumber) && isset($lead_data->cardMonth) && isset($lead_data->cardYear) && isset($lead_data->cardSecurityCode)) {
-
-                    $existingLead = Lead::where('card_number', $lead_data->cardNumber)
-                    ->where('card_month', $lead_data->cardMonth)
-                    ->where('card_year', $lead_data->cardYear)
-                    ->where('card_cvv', $lead_data->cardSecurityCode)
-                    ->first();
-
-                    if (!$existingLead) {
-                        $lead = new Lead();
-                        $lead->log_file_id = $file->id;
-                        $lead->first_name = $lead_data->firstName ?? '';
-                        $lead->last_name = $lead_data->lastName ?? '';
-                        $lead->email = $lead_data->emailAddress ?? '';
-                        $lead->phone = $lead_data->phoneNumber;
-                        $lead->address_1 = $lead_data->address1 ?? '';
-                        $lead->address_2 = $lead_data->address2 ?? '';
-                        $lead->city = $lead_data->city ?? '';
-                        $lead->state = $lead_data->state ?? '';
-                        $lead->zip = $lead_data->zip ?? $lead_data->postalCode ?? '';
-                        $lead->country = $lead_data->country ?? '';
-                        $lead->ip = $lead_data->ipAddress ?? '';
-                        $lead->card_month = $lead_data->cardMonth ?? '';
-                        $lead->card_year = $lead_data->cardYear ?? '';
-                        $lead->card_number = $lead_data->cardNumber ?? '';
-                        $lead->card_cvv = $lead_data->cardSecurityCode ?? '';
-                        $lead->creditcard_type = $lead_data->creditCardType;
-                        $lead->declined = isset($lead_data->decline_message) ? true : false;
-                        
-                        if (isset($lead_data->lead_time)) {
-                            $lead->lead_time = Carbon::parse($lead_data->lead_time);
-                        }
-
-                        $lead->lead_url = '';
-                        $lead->aff_id = $lead_data->affid ?? '';
-                        $lead->pub = $lead_data->sid ?? '';
-                        $lead->click_id = $lead_data->click_id ?? '';
-                        $lead->c1 = $lead_data->c1 ?? '';
-                        $lead->c2 = $lead_data->c2 ?? '';
-                        $lead->c3 = $lead_data->c3 ?? '';
-
-
-                        $lead->save();
-                        $total++;
-                    }
-                }
-
-               
-
-            }
-            $file->leads_exported = true;
-            $file->save();
-
-            flashify([
-                'plugin' => 'izi-toast',
-                'title' => 'Success',
-                'text' => 'File '.$file->file_path.' processed with '.$total.' leads',
-                'type' => 'success',
-                'livewire' => $this,
-            ]);
-
-        }
-
-        
-
-    }
-
+    
     public function render()
     {
         $unprocessedFilesCount = LogFile::where('processed', false)->count();

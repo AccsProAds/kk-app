@@ -40,6 +40,22 @@
                     document.getElementById('start_date')._flatpickr.set('maxDate', dateStr);
                 }
             });
+
+            flatpickr("#lead_time_start", {
+                enableTime: false,
+                dateFormat: "Y-m-d",
+                onChange: function(selectedDates, dateStr, instance) {
+                    document.getElementById('lead_time_end')._flatpickr.set('minDate', dateStr);
+                }
+            });
+            flatpickr("#lead_time_end", {
+                enableTime: false,
+                dateFormat: "Y-m-d",
+                onChange: function(selectedDates, dateStr, instance) {
+                    document.getElementById('lead_time_start')._flatpickr.set('maxDate', dateStr);
+                }
+            });
+
         });
     </script>
 
