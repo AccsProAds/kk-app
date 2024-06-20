@@ -7,6 +7,7 @@
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 themeSystem: 'bootstrap5',
                 initialView: 'dayGridMonth',
+                //initialView: 'multiMonthYear',
                 events: []
             });
 
