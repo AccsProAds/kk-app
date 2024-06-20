@@ -7,7 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Include Flatpickr CSS -->
     <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
-
+    <!-- ... other meta tags ... -->
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.14/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.14/index.global.min.js'></script>
+   
 
     @livewireStyles
 </head>
@@ -29,6 +32,7 @@
             flatpickr("#start_date", {
                 enableTime: false,
                 dateFormat: "Y-m-d",
+                minDate: "today",
                 onChange: function(selectedDates, dateStr, instance) {
                     document.getElementById('end_date')._flatpickr.set('minDate', dateStr);
                 }
@@ -59,7 +63,11 @@
         });
     </script>
 
-    @livewireScripts
+
     @flashifyScripts
+
+
+    @stack('scripts')
+    @livewireScripts
 </body>
 </html>
