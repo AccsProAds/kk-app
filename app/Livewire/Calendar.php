@@ -33,9 +33,18 @@ class Calendar extends Component
         foreach ($this->leads as $lead) {
             $date = Carbon::parse($lead->lead_time)->toDateString();
             if (!isset($leadCountsByDate[$date])) {
-                $leadCountsByDate[$date] = 0;
+                $leadCountsByDate[$date] = [
+                    "total" => 0,
+                    "declined" => 0,
+                    "no_declined" => 0
+                ];
             }
-            $leadCountsByDate[$date]++;
+            $leadCountsByDate[$date]["total"]++;
+            if($lead->declined) {
+                $leadCountsByDate[$date]["declined"]++;
+            } else {
+                $leadCountsByDate[$date]["no_declined"]++;
+            }
         }
     
         // Fetching scheduled leads

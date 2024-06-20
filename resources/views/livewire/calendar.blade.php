@@ -14,7 +14,7 @@
 
             const serviceColors = {
                 fitnessxr: 'blue',
-                usadc: 'green',
+                usadc: 'orange',
                 uprev: 'purple'
             };
 
@@ -27,12 +27,30 @@
                 console.log(event);
 
                 let events = [];
-                for (const [date, count] of Object.entries(event[0].leads)) {
+                for (const [date, item] of Object.entries(event[0].leads)) {
                     events.push({
-                        title: count + ' Leads',
+                        title: item.no_declined + ' No-Declined',
+                        start: date,
+                        color: 'green'
+                    } , {
+                        title: item.declined + ' Declined',
+                        start: date,
+                        color: 'red'
+                    },  {
+                        title: item.total + ' Total',
                         start: date,
                         color: 'grey'
                     });
+                    /*events.push({
+                        title: item.declined + ' Declined',
+                        start: date,
+                        color: 'grey'
+                    });
+                    events.push({
+                        title: item.total + ' Leads',
+                        start: date,
+                        color: 'grey'
+                    });*/
                 }
                 for (const [date, services] of Object.entries(event[0].scheduledLeads)) {
                     for (const [service, count] of Object.entries(services)) {
