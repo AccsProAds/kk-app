@@ -35,10 +35,6 @@ class ProcessLead implements ShouldQueue
     public function handle()
     {
         $lead = $this->lead2External->lead;
-
-
-       
-
         $service = $this->lead2External->external_service;
 
         switch($service) {

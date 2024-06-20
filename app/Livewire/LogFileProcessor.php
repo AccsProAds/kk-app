@@ -29,8 +29,7 @@ class LogFileProcessor extends Component
     public $leads_per_day = 0;
     public $total_days = 0;
     public $leads = [];
-    public $calendar;
-    public $calendar_to_schedule = [];
+
 
     protected $rules = [
         'schedule_type' => 'required|string|in:date,leads_per_day',
@@ -45,53 +44,11 @@ class LogFileProcessor extends Component
         'declined_filter' => 'required|string|in:all,only,ignore',
     ];
 
-    public function mount()
+    public function boot()
     {
         // Initialization if needed
-        $this->fetchLeadsForCalendar();
+        
     }
-
-    public function fetchLeadsForCalendar()
-    {
-        $query = Lead::query();
-
-        if ($this->lead_time_start && $this->lead_time_end) {
-            $leadTimeStart = Carbon::parse($this->lead_time_start)->startOfDay();
-            $leadTimeEnd = Carbon::parse($this->lead_time_end)->endOfDay();
-            $query->whereBetween('lead_time', [$leadTimeStart, $leadTimeEnd]);
-        }
-
-        if ($this->country) {
-            $query->where('country', $this->country);
-        }
-
-        if ($this->declined_filter === 'only') {
-            $query->where('declined', true);
-        } elseif ($this->declined_filter === 'ignore') {
-            $query->where('declined', false);
-        }
-
-        $this->leads = $query->orderBy('lead_time')->get();
-
-        $leadCountsByDate = [];
-        foreach ($this->leads as $lead) {
-            $date = Carbon::parse($lead->lead_time)->toDateString();
-            if (!isset($leadCountsByDate[$date])) {
-                $leadCountsByDate[$date] = 0;
-            }
-            $leadCountsByDate[$date]++;
-        }
-
-        $this->leads_found = $this->leads->count();
-        $this->leads_per_day = $this->leads_found ? intdiv($this->leads_found, count($leadCountsByDate)) : 0;
-        $this->total_days = count($leadCountsByDate);
-        $this->total_days = intval(ceil($this->total_days));
-
-        $this->calendar = $leadCountsByDate;
-
-        $this->dispatch('leadsCalculated', ['leads' => $leadCountsByDate]);
-    }
-
 
     public function updatedScheduleType()
     {
@@ -106,6 +63,8 @@ class LogFileProcessor extends Component
 
     public function calculateLeads()
     {
+        //$this->fetchLeadsForCalendar();
+
         $this->validate();
 
         //$this->fetchLeadsForCalendar();
@@ -225,7 +184,7 @@ class LogFileProcessor extends Component
             $leadsForToday = $leadsPerDay + ($day < $extraLeads ? 1 : 0);
 
 
-            $this->calendar_to_schedule[$currentDate->toDateString()] = $leadsForToday;
+            //$this->calendar_to_schedule[$currentDate->toDateString()] = $leadsForToday;
 
             if ($leadsForToday > 0) {
                 $interval = intdiv($secondsInDay, $leadsForToday);

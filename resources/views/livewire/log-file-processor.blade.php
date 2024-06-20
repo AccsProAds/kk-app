@@ -97,40 +97,7 @@
         </div>
     </div>
 
-    <div id='calendar'></div>
 
-
-    <script>
-        //var calendarEl = document.getElementById('calendar');
-
-        var calendarEl = document.getElementById('calendar');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            themeSystem: 'bootstrap5',
-            initialView: 'dayGridMonth'
-        });
-        calendar.render();
-
-        var events = [];
-        
-        document.addEventListener('DOMContentLoaded', function () {
-            Livewire.on('leadsCalculated', (event) => {
-                 console.log(event[0]);
-
-
-                 //let events = [];
-                    for (const [date, count] of Object.entries(event[0].leads)) {
-                        events.push({
-                            title: count + ' Leads',
-                            start: date
-                        });
-                    }
-                    calendar.addEventSource(events);
-
-            });
-
-        });
-        
-</script>
 
 
 </div>
