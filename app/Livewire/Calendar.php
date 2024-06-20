@@ -9,12 +9,15 @@ use App\Models\Lead2External;
 use App\Libraries\FileExtractLibrary;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class Calendar extends Component
 {
     public $calendar;
     public $scheduledCalendar = [];
-
+    public $leads_found;
+    public $leads_per_day;
+    public $total_days;
 
     public function boot()
     {
@@ -24,13 +27,36 @@ class Calendar extends Component
 
     public function fetchLeadsForCalendar()
     {
-        // Fetching new leads
-        $query = Lead::query();
-    
-        $this->leads = $query->orderBy('lead_time')->get();
-    
+        // Use caching to improve performance
+        $this->leads = Cache::remember('leads', 600, function () {
+            return Lead::orderBy('lead_time')->get();
+        });
+
+        $leadCountsByDate = $this->calculateLeadCounts($this->leads);
+
+        $scheduledLeads = Cache::remember('scheduled_leads', 600, function () {
+            return Lead2External::where('processed', false)
+                ->orderBy('scheduled_time')
+                ->get();
+        });
+
+        $scheduledLeadCountsByDate = $this->calculateScheduledLeadCounts($scheduledLeads);
+
+        $this->leads_found = $this->leads->count();
+        $this->leads_per_day = $this->leads_found ? intdiv($this->leads_found, count($leadCountsByDate)) : 0;
+        $this->total_days = count($leadCountsByDate);
+        $this->total_days = intval(ceil($this->total_days));
+
+        $this->calendar = $leadCountsByDate;
+        $this->scheduledCalendar = $scheduledLeadCountsByDate;
+
+        $this->dispatch('leadsCalculated', ['leads' => $leadCountsByDate, 'scheduledLeads' => $scheduledLeadCountsByDate]);
+    }
+
+    private function calculateLeadCounts($leads)
+    {
         $leadCountsByDate = [];
-        foreach ($this->leads as $lead) {
+        foreach ($leads as $lead) {
             $date = Carbon::parse($lead->lead_time)->toDateString();
             if (!isset($leadCountsByDate[$date])) {
                 $leadCountsByDate[$date] = [
@@ -46,12 +72,11 @@ class Calendar extends Component
                 $leadCountsByDate[$date]["no_declined"]++;
             }
         }
-    
-        // Fetching scheduled leads
-        $scheduledLeads = Lead2External::where('processed', false)
-            ->orderBy('scheduled_time')
-            ->get();
-    
+        return $leadCountsByDate;
+    }
+
+    private function calculateScheduledLeadCounts($scheduledLeads)
+    {
         $scheduledLeadCountsByDate = [];
         foreach ($scheduledLeads as $scheduledLead) {
             $date = Carbon::parse($scheduledLead->scheduled_time)->toDateString();
@@ -64,18 +89,8 @@ class Calendar extends Component
             }
             $scheduledLeadCountsByDate[$date][$service]++;
         }
-    
-        $this->leads_found = $this->leads->count();
-        $this->leads_per_day = $this->leads_found ? intdiv($this->leads_found, count($leadCountsByDate)) : 0;
-        $this->total_days = count($leadCountsByDate);
-        $this->total_days = intval(ceil($this->total_days));
-    
-        $this->calendar = $leadCountsByDate;
-        $this->scheduledCalendar = $scheduledLeadCountsByDate;
-    
-        $this->dispatch('leadsCalculated', ['leads' => $leadCountsByDate, 'scheduledLeads' => $scheduledLeadCountsByDate]);
+        return $scheduledLeadCountsByDate;
     }
-
 
     public function render()
     {
