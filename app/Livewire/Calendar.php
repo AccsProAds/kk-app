@@ -28,20 +28,16 @@ class Calendar extends Component
     public function fetchLeadsForCalendar()
     {
         // Use caching to improve performance
-        $this->leads = Cache::remember('leads', 60, function () {
-            return Lead::select('id', 'lead_time', 'declined')
-                ->orderBy('lead_time')
-                ->get();
-        });
+        $this->leads = Lead::select('id', 'lead_time', 'declined')
+        ->orderBy('lead_time')
+        ->get();
 
         $leadCountsByDate = $this->calculateLeadCounts($this->leads);
 
-        $scheduledLeads = Cache::remember('scheduled_leads', 60, function () {
-            return Lead2External::select('id', 'processed', 'scheduled_time', 'external_service')
-                ->where('processed', false)
-                ->orderBy('scheduled_time')
-                ->get();
-        });
+        $scheduledLeads = Lead2External::select('id', 'processed', 'scheduled_time', 'external_service')
+        ->where('processed', false)
+        ->orderBy('scheduled_time')
+        ->get();
 
         $scheduledLeadCountsByDate = $this->calculateScheduledLeadCounts($scheduledLeads);
 
