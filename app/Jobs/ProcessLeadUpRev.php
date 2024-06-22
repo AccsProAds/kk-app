@@ -85,6 +85,8 @@ class ProcessLeadUpRev implements ShouldQueue
 
             //Log::info('Lead processed successfully', ['lead_id' => $this->lead2External->lead_id, 'request' => $data, 'response' => $responseBody]);
         } catch (\Exception $e) {
+            $this->lead2External->response = $e->getMessage();
+            $this->lead2External->save();
             Log::error('Error processing lead', ['lead_id' => $this->lead2External->lead_id, 'error' => $e->getMessage()]);
         }
     }
