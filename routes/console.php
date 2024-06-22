@@ -25,7 +25,7 @@ Artisan::command('leads:process', function () {
 
     foreach ($leadsToProcess as $lead2External) {
         if($lead2External->external_service == 'uprev') {
-            ProcessLeadUpRev::dispatch($lead2External);
+            ProcessLeadUpRev::dispatch($lead2External)->onQueue('uprev');
         } else {
             ProcessLead::dispatch($lead2External);
         }

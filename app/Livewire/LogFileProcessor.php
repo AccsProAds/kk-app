@@ -117,6 +117,10 @@ class LogFileProcessor extends Component
             $query->where('leads.declined', false);
         }
 
+        if($service == 'uprev') {
+            $query->where('leads.declined', true);
+        }
+
         if ($leadTimeStart && $leadTimeEnd) {
             $query->whereBetween('leads.lead_time', [$leadTimeStart, $leadTimeEnd]);
         }
