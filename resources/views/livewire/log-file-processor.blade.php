@@ -76,11 +76,11 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="declined_filter">Declined:</label>
+                        <label for="declined_filter">Leads Type:</label>
                         <select id="declined_filter" class="form-control" wire:model="declined_filter">
-                            <option value="all">All</option>
-                            <option value="only">Only</option>
-                            <option value="ignore">Ignore</option>
+                            <option value="all">All Leads</option>
+                            <option value="ignore">NO Declined Leads</option>
+                            <option value="only">ONLY Declined Leads</option>
                         </select>
                         @error('declined_filter') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
